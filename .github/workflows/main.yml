@@ -21,10 +21,10 @@ jobs:
           distribution: temurin
           java-version: '25'
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.6
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '9.1.0'
+          gradle-version: '9.6.0'
 
       - name: Find and build mod
         shell: bash
@@ -32,19 +32,17 @@ jobs:
           PROJECT_FILE=$(find . -type f -name settings.gradle -not -path './.git/*' | head -n 1)
 
           if [ -z "$PROJECT_FILE" ]; then
-            echo "ERROR: Could not find settings.gradle!"
-            echo "Repository files:"
-            find . -maxdepth 4 -type f | head -100
+            echo "ERROR: Could not find settings.gradle"
+            find . -maxdepth 5 -type f
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$PROJECT_FILE")
-
-          echo "Found Gradle project in: $PROJECT_DIR"
-
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Building project in: $PROJECT_DIR"
 
           gradle -p "$PROJECT_DIR" build --stacktrace
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
