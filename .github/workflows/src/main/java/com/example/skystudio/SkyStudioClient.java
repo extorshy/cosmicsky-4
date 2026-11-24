@@ -14,7 +14,6 @@ public class SkyStudioClient implements ClientModInitializer {
     public static final String MOD_ID = "skystudio";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    // Shows up in Options > Controls > Key Binds under "Sky Studio", so the player can rebind it.
     public static KeyMapping OPEN_KEY;
 
     @Override
@@ -22,13 +21,23 @@ public class SkyStudioClient implements ClientModInitializer {
         SkyConfig.load();
 
         KeyMapping.Category category = KeyMapping.Category.register(
-                Identifier.fromNamespaceAndPath(MOD_ID, "main"));
+                Identifier.fromNamespaceAndPath(MOD_ID, "main")
+        );
+
         OPEN_KEY = KeyMappingHelper.registerKeyMapping(
-                new KeyMapping("key.skystudio.open", InputConstants.Type.KEYSYM, InputConstants.KEY_K, category));
+                new KeyMapping(
+                        "key.skystudio.open",
+                        InputConstants.Type.KEYBOARD,
+                        InputConstants.KEY_K,
+                        category
+                )
+        );
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             while (OPEN_KEY.consumeClick()) {
-                if (mc.screen == null && mc.level != null) mc.setScreen(new SkyScreen());
+                if (mc.gui.screen() == null && mc.level != null) {
+                    mc.gui.setScreen(new SkyScreen());
+                }
             }
         });
     }
