@@ -27,7 +27,6 @@ jobs:
           gradle-version: '9.1.0'
 
       - name: Build Sky Studio
-        working-directory: skystudio
         run: gradle build --stacktrace
 
       - name: Upload mod JAR
@@ -35,6 +34,6 @@ jobs:
         with:
           name: skystudio-jar
           path: |
-            skystudio/build/libs/*.jar
-            !skystudio/build/libs/*-sources.jar
+            build/libs/*.jar
+            !build/libs/*-sources.jar
           if-no-files-found: error
