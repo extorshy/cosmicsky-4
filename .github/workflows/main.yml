@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java 25
@@ -21,12 +21,13 @@ jobs:
           distribution: temurin
           java-version: '25'
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.1.0'
 
-      - name: Build mod
+      - name: Build Sky Studio
+        working-directory: skystudio
         run: gradle build --stacktrace
 
       - name: Upload mod JAR
@@ -34,6 +35,6 @@ jobs:
         with:
           name: skystudio-jar
           path: |
-            build/libs/*.jar
-            !build/libs/*-sources.jar
+            skystudio/build/libs/*.jar
+            !skystudio/build/libs/*-sources.jar
           if-no-files-found: error
