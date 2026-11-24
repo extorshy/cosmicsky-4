@@ -1,3 +1,4 @@
+
 package com.example.skystudio;
 
 import com.google.gson.Gson;
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/** All user settings. Colours are 0xRRGGBB ints. */
 public class SkyConfig {
     private static final Gson GSON =
             new GsonBuilder().setPrettyPrinting().create();
@@ -64,14 +66,14 @@ public class SkyConfig {
 
         public Galaxy() {}
 
-        public Galaxy(String name, int color, float brightness,
-                      float azimuth, float elevation, float size) {
-            this.name = name;
-            this.color = color;
-            this.brightness = brightness;
-            this.azimuth = azimuth;
-            this.elevation = elevation;
-            this.size = size;
+        public Galaxy(String n, int c, float b,
+                      float az, float el, float s) {
+            name = n;
+            color = c;
+            brightness = b;
+            azimuth = az;
+            elevation = el;
+            size = s;
         }
     }
 
@@ -83,11 +85,11 @@ public class SkyConfig {
 
         public Planet() {}
 
-        public Planet(String name, int color, float size, float orbitDays) {
-            this.name = name;
-            this.color = color;
-            this.size = size;
-            this.orbitDays = orbitDays;
+        public Planet(String n, int c, float s, float o) {
+            name = n;
+            color = c;
+            size = s;
+            orbitDays = o;
         }
     }
 
@@ -116,7 +118,6 @@ public class SkyConfig {
             if (Files.exists(FILE)) {
                 String json = Files.readString(FILE);
                 SkyConfig loaded = GSON.fromJson(json, SkyConfig.class);
-
                 INSTANCE = loaded != null ? loaded : new SkyConfig();
             } else {
                 INSTANCE = new SkyConfig();
@@ -129,7 +130,6 @@ public class SkyConfig {
             SkyStudioClient.LOGGER.warn(
                     "Could not read config, using defaults", e
             );
-
             INSTANCE = new SkyConfig();
             normalize();
             save();
@@ -161,38 +161,46 @@ public class SkyConfig {
             Files.writeString(FILE, GSON.toJson(INSTANCE));
 
         } catch (Exception e) {
-            SkyStudioClient.LOGGER.warn("Could not save config", e);
+            SkyStudioClient.LOGGER.warn(
+                    "Could not save config", e
+            );
         }
     }
 
-    /** Returns the client-side time override, or null for world time. */
+    /** Tick-of-day to show on this client, or null for world time. */
     public static Long currentOverrideTicks() {
         SkyConfig c = INSTANCE;
 
         if (c.realTime) {
-            java.time.LocalTime time = java.time.LocalTime.now();
+            java.time.LocalTime t = java.time.LocalTime.now();
 
-            double hours = time.getHour()
-                    + time.getMinute() / 60.0
-                    + time.getSecond() / 3600.0;
+            double h = t.getHour()
+                    + t.getMinute() / 60.0
+                    + t.getSecond() / 3600.0;
 
             return Math.floorMod(
-                    Math.round((hours - 6.0) * 1000.0),
+                    Math.round((h - 6.0) * 1000.0),
                     24000L
             );
         }
 
         if (c.useSetTime) {
-            return (long) Math.floorMod(c.setTimeTicks, 24000);
+            return (long) Math.floorMod(
+                    c.setTimeTicks, 24000
+            );
         }
 
         return null;
     }
 
     public static String describeTicks(int ticks) {
-        int minutes = (int) Math.floorMod(
-                (ticks / 1000.0 + 6.0) * 60.0,
-                1440.0
+        // FIX: convert the decimal calculation to an int
+        // before calling Math.floorMod.
+        int minutes = Math.floorMod(
+                (int) Math.floor(
+                        (ticks / 1000.0 + 6.0) * 60.0
+                ),
+                1440
         );
 
         String phase =
@@ -213,28 +221,24 @@ public class SkyConfig {
         );
     }
 
-    /** Parses #RRGGBB, RRGGBB, or 0xRRGGBB. Returns -1 on failure. */
-    public static int parseColor(String value) {
-        if (value == null) {
+    /** Parses #RRGGBB, RRGGBB or 0xRRGGBB. Returns -1 on failure. */
+    public static int parseColor(String s) {
+        if (s == null) {
             return -1;
         }
 
         try {
-            String color = value.trim();
+            s = s.trim()
+                    .replace("#", "")
+                    .replace("0x", "");
 
-            if (color.startsWith("#")) {
-                color = color.substring(1);
-            } else if (color.startsWith("0x") || color.startsWith("0X")) {
-                color = color.substring(2);
-            }
-
-            if (color.length() != 6) {
+            if (s.length() != 6) {
                 return -1;
             }
 
-            return Integer.parseInt(color, 16) & 0xFFFFFF;
+            return Integer.parseInt(s, 16) & 0xFFFFFF;
 
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             return -1;
         }
     }
